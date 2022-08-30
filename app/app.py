@@ -1,8 +1,7 @@
+import requests
+
 def handler(event, context):
-
-    h = float(event['hour'])
-    print(h)
-
+    r = requests.get("https://api.kanye.rest/")
     return {
-        'past hours': h
+        event["name"]: r.json()["quote"]
     }
