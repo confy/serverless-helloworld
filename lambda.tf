@@ -34,6 +34,7 @@ resource null_resource ecr_image {
 # local docker build and push
 provisioner "local-exec" {
   command = <<EOF
+           aws ecr get-login-password --region ${var.region} | docker login --username AWS --password-stdin ${local.account_id}.dkr.ecr.${var.region}.amazonaws.com
            cd ${path.module}/${local.app_dir}
            docker build -t ${aws_ecr_repository.repo.repository_url}:${local.ecr_image_tag} .
            docker push ${aws_ecr_repository.repo.repository_url}:${local.ecr_image_tag}
@@ -117,7 +118,21 @@ resource aws_lambda_function hello_func {
   image_uri = "${aws_ecr_repository.repo.repository_url}@${data.aws_ecr_image.lambda_image.id}"
   package_type = "Image"
 }
+
+resource "aws_lambda_permission" "apigw" {
+   statement_id  = "AllowAPIGatewayInvoke"
+   action        = "lambda:InvokeFunction"
+   function_name = aws_lambda_function.hello_func.function_name
+   principal     = "apigateway.amazonaws.com"
+
+   # The "/*/*" portion grants access from any method on any resource
+   # within the API Gateway REST API.
+   source_arn = "${aws_api_gateway_rest_api.hello-gw.execution_arn}/*/*"
+}
+
  
 output "lambda_name" {
   value = aws_lambda_function.hello_func.id
 }
+
+

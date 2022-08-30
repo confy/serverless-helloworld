@@ -1,4 +1,8 @@
 def handler(event, context):
+
+    h = float(event['hour'])
+    print(h)
+
     return {
-        'Hello': 'World'
+        'past hours': h
     }
